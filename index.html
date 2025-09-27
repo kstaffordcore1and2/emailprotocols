@@ -287,7 +287,7 @@
                 <div class="step-content">
                     <p><strong>What it is:</strong> SMTP (Simple Mail Transfer Protocol) is the fundamental set of rules that allows mail servers to **send** and **relay** email across the internet.</p>
                     <p><strong>How it starts:</strong> When a user clicks send, the local server initiates the process using SMTP to communicate with the recipient's server.</p>
-                    <p><strong>The Flaw:</strong> Basic SMTP allows a sender to easily claim any "From" address they want, which is the root cause of email **spoofing** and why extra security is needed.</p>
+                    <p><strong>The Flaw:</strong> SMTP does not verify who the sender really is, which makes spoofing possible.</p>
                     <p><strong>Analogy:</strong> SMTP is the **delivery truck**. It transports the mail but doesn't inherently check the driver's ID.</p>
                 </div>
             </div>
@@ -301,7 +301,7 @@
                 </div>
                 <div class="step-content">
                     <p><strong>What it is:</strong> The MX (Mail Exchanger) DNS record is a directional signpost that tells the internet **which server** is responsible for accepting email for a specific domain.</p>
-                    <p><strong>How it works:</strong> Before sending the email, the sender's server queries the recipient's DNS to find the MX record. This record provides the address of the recipient's mail server (e.g., Google's server for a Google Workspace domain) and a priority ranking.</p>
+                    <p><strong>How it works:</strong> Before sending the email, the sender's server queries the recipient's DNS to find the MX record. This record provides the address of the recipient's mail server (e.g., Google's server for a Google Workspace domain) and a priority ranking.  ***If multiple MX records exist, the one with the lowest number has the highest priority***</p>
                     <p><strong>The Role:</strong> This step ensures the email is directed to the correct digital mailbox before any security checks can even begin.</p>
                     <p><strong>Analogy:</strong> The MX record is the **Mail Carrier's Address Book**. It tells the delivery truck (SMTP) the exact service door to drop off the mail at the recipient's domain.</p>
                 </div>
@@ -315,7 +315,7 @@
                     <span class="toggle-icon"></span>
                 </div>
                 <div class="step-content">
-                    <p><strong>What it is:</strong> The TXT (Text) DNS record is a general-purpose record used to store arbitrary text. It is the designated storage method for all email authentication policies.</p>
+                    <p><strong>What it is:</strong> The TXT (Text) DNS record is a general-purpose record used to store arbitrary text. It is the designated storage method for all email authentication policies. Not for sending/receiving emails--it just stores authentication rules.</p>
                     <p><strong>How it works:</strong> The recipient's mail server (identified by the MX record) starts querying the sender's domain using TXT records to retrieve the specific security instructions for SPF, DKIM, and DMARC.</p>
                     <p><strong>The Role:</strong> Without TXT records, the authentication checks cannot occur because the recipient server would have no policy information to enforce.</p>
                     <p><strong>Analogy:</strong> The TXT record is the **Official Policy File Cabinet**. It doesn't perform the check itself, but it holds the rulebooks (SPF, DKIM, DMARC) that the receiving server will use.</p>
@@ -331,7 +331,7 @@
                 </div>
                 <div class="step-content">
                     <p><strong>What it is:</strong> A public policy (stored in a TXT record) listing all IP addresses (mail servers) that are **authorized** to send email for your domain.</p>
-                    <p><strong>How it works:</strong> The recipient server checks the sending IP address against your domain's SPF record. If the IP is on the list, the email passes the SPF check.</p>
+                    <p><strong>How it works:</strong> The recipient server checks the sending IP address against your domain's SPF record---it does not check the message content. If the IP is on the list, the email passes the SPF check.</p>
                     <p><strong>For Google Workspace:</strong> Your record must contain <code>include:_spf.google.com</code> to authorize Google's sending servers.</p>
                     <p><strong>Analogy:</strong> SPF is the **bouncer at the door with a guest list**. "Is this sender's IP address on the approved list for <code>yourdomain.edu</code>?"</p>
                 </div>
@@ -360,7 +360,7 @@
                     <span class="toggle-icon"></span>
                 </div>
                 <div class="step-content">
-                    <p><strong>What it is:</strong> DMARC (Domain-based Message Authentication, Reporting & Conformance) connects the results of SPF and DKIM and enforces a policy (also stored in a TXT record).</p>
+                    <p><strong>What it is:</strong> DMARC (Domain-based Message Authentication, Reporting & Conformance) connects the results of SPF and DKIM and enforces a policy (also stored in a TXT record). It also sends reports back to the domain owner so they can see who is trying to send mail using their domain</p>
                     <p><strong>Alignment:</strong> DMARC is essential because it requires the visible **"From" address** to align with the domain validated by either SPF or DKIM. This is the final defense against domain spoofing.</p>
                     <p><strong>The Policy (`p=`):</strong> This tag tells the recipient server what to do if the email fails the alignment check:</p>
                     <ul>
@@ -398,6 +398,7 @@
                         <li><strong>DMARC Set to `p=none`:</strong> The most common reason. If the domain owner hasn't set their DMARC policy to `quarantine` or `reject`, receiving servers are simply told to monitor the spoofed email, and they often deliver it anyway.</li>
                         <li>**"Friendly From" Spoofing (Display Name Attack):** A scammer uses a completely different, unauthenticated domain, but sets the visible display name to match a legitimate one (e.g., the email address is `scammer@notyourdomain.com` but the name shown is **"Principal Smith"**). The security checks only look at the domain, not the display name.</li>
                         <li>**Phishing via Look-Alike Domains (Typosquatting):** The scammer registers a domain that is visually similar to yours (e.g., `y0urdomain.edu` instead of `yourdomain.edu`). Since this is technically a different, unauthenticated domain, SPF/DKIM/DMARC for *your* domain are not even checked.</li>
+                        <li>SPF, DKIM, and DMARC only protect your domain. They cannot stop attackers from using other domains.” This closes the loop on student misconceptions.</li>
                     </ul>
                 </div>
             </div>
