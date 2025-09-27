@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Authentication Flow: SMTP, SPF, DKIM, DMARC Interactive</title>
+    <title>Email Authentication Flow: DNS, SMTP, SPF, DKIM, DMARC Interactive</title>
     <style>
         /* Retro/AOL-inspired theme */
         body {
@@ -147,12 +147,117 @@
             font-size: 0.9em;
             color: #0b2b4a;
         }
+
+        /* GAME-SPECIFIC STYLES (AOL-inspired buttons) */
+        .dmarc-game {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 26px;
+            border: 2px solid rgba(0,51,153,0.85); /* deep AOL indigo */
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(232,238,246,0.95), rgba(216,230,255,0.9));
+            box-shadow: 0 8px 30px rgba(4,18,64,0.25);
+        }
+        .dmarc-game h2 {
+            color: #003399;
+            text-align: center;
+            margin-bottom: 18px;
+            font-size: 1.75em;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+        }
+        #scenario, #policy-info {
+            font-size: 1.05em;
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 6px;
+            background-color: rgba(255,255,255,0.85);
+            text-align: center;
+            border: 1px solid rgba(0,51,153,0.08);
+        }
+
+        /* Glossy AOL-esque option buttons */
+        .options button {
+            display: block;
+            width: 100%;
+            padding: 14px 16px;
+            margin: 10px 0;
+            font-size: 1.05em;
+            cursor: pointer;
+            border: 1px solid rgba(0,38,102,0.95);
+            border-radius: 6px;
+            transition: transform 0.08s ease, box-shadow 0.12s ease;
+            background: linear-gradient(180deg,#1e62d0 0%, #0a47a3 60%, #083b8a 100%);
+            color: #fff9dc; /* pale warm yellow for high contrast */
+            text-shadow: 0 1px 0 rgba(0,0,0,0.18);
+            font-weight: 700;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 10px rgba(6,24,64,0.22);
+            text-align: left;
+            padding-left: 18px;
+        }
+        .options button:hover {
+            transform: translateY(-3px);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 10px 20px rgba(6,24,64,0.26);
+            color: #fffde0;
+        }
+        .options button:disabled {
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+            filter: grayscale(10%);
+            cursor: default;
+        }
+
+        #result {
+            text-align: center;
+            margin-top: 22px;
+            padding: 14px;
+            border-radius: 6px;
+            min-height: 46px;
+            font-weight: 800;
+            font-size: 1.12em;
+            color: #05204a;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 6px 18px rgba(6,24,64,0.08);
+        }
+        .correct {
+            background: linear-gradient(180deg,#e6f7ea, #c9efd0);
+            color: #0b4d13;
+            border: 1px solid #2e7d32;
+        }
+        .incorrect {
+            background: linear-gradient(180deg,#ffecec, #ffd6d6);
+            color: #7a1212;
+            border: 1px solid #d32f2f;
+        }
+
+        #next-button {
+            display: none;
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            background: linear-gradient(180deg,#ffda44 0%, #ffbf00 60%);
+            color: #08284a;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 6px;
+            font-size: 1.02em;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(4,18,64,0.12), inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+        #next-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 26px rgba(4,18,64,0.16);
+        }
+
+        /* Focus outlines for keyboard users */
+        .options button:focus, #next-button:focus { outline: 3px solid rgba(0,102,204,0.22); }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>📧 Email Authentication Flow: SMTP, SPF, DKIM, DMARC</h1>
+        <h1>📧 Email Authentication Flow: DNS, SMTP, SPF, DKIM, DMARC</h1>
         <p style="text-align: center; margin-bottom: 30px; font-size: 1.1em; color: #555;">
             Click on each step to reveal details about how these protocols work together to secure email communication.
         </p>
@@ -166,7 +271,7 @@
                 </div>
                 <div class="step-content">
                     <p><strong>What it is:</strong> SMTP (Simple Mail Transfer Protocol) is the fundamental set of rules that allows mail servers to **send** and **relay** email across the internet.</p>
-                    <p><strong>How it starts:</strong> When a user sends an email from your Google Workspace for Education domain, Google's server initiates the transmission using SMTP.</p>
+                    <p><strong>How it starts:</strong> When a user clicks send, the local server initiates the process using SMTP to communicate with the recipient's server.</p>
                     <p><strong>The Flaw:</strong> Basic SMTP allows a sender to easily claim any "From" address they want, which is the root cause of email **spoofing** and why extra security is needed.</p>
                     <p><strong>Analogy:</strong> SMTP is the **delivery truck**. It transports the mail but doesn't inherently check the driver's ID.</p>
                 </div>
@@ -174,13 +279,43 @@
 
             <div class="arrow">↓</div>
 
-            <div class="step" id="step-spf">
+            <div class="step" id="step-mx">
                 <div class="step-header">
-                    <span><span class="icon">📋</span> 2. SPF: Sender Policy Framework</span>
+                    <span><span class="icon">🗺️</span> 2. The Destination (MX Record)</span>
                     <span class="toggle-icon"></span>
                 </div>
                 <div class="step-content">
-                    <p><strong>What it is:</strong> A public record (DNS TXT record) listing all IP addresses (mail servers) that are **authorized** to send email for your domain.</p>
+                    <p><strong>What it is:</strong> The MX (Mail Exchanger) DNS record is a directional signpost that tells the internet **which server** is responsible for accepting email for a specific domain.</p>
+                    <p><strong>How it works:</strong> Before sending the email, the sender's server queries the recipient's DNS to find the MX record. This record provides the address of the recipient's mail server (e.g., Google's server for a Google Workspace domain) and a priority ranking.</p>
+                    <p><strong>The Role:</strong> This step ensures the email is directed to the correct digital mailbox before any security checks can even begin.</p>
+                    <p><strong>Analogy:</strong> The MX record is the **Mail Carrier's Address Book**. It tells the delivery truck (SMTP) the exact service door to drop off the mail at the recipient's domain.</p>
+                </div>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <div class="step" id="step-txt">
+                <div class="step-header">
+                    <span><span class="icon">📂</span> 3. The Policy Source (TXT Record)</span>
+                    <span class="toggle-icon"></span>
+                </div>
+                <div class="step-content">
+                    <p><strong>What it is:</strong> The TXT (Text) DNS record is a general-purpose record used to store arbitrary text. It is the designated storage method for all email authentication policies.</p>
+                    <p><strong>How it works:</strong> The recipient's mail server (identified by the MX record) starts querying the sender's domain using TXT records to retrieve the specific security instructions for SPF, DKIM, and DMARC.</p>
+                    <p><strong>The Role:</strong> Without TXT records, the authentication checks cannot occur because the recipient server would have no policy information to enforce.</p>
+                    <p><strong>Analogy:</strong> The TXT record is the **Official Policy File Cabinet**. It doesn't perform the check itself, but it holds the rulebooks (SPF, DKIM, DMARC) that the receiving server will use.</p>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+
+            <div class="step" id="step-spf">
+                <div class="step-header">
+                    <span><span class="icon">📋</span> 4. SPF: Sender Policy Framework</span>
+                    <span class="toggle-icon"></span>
+                </div>
+                <div class="step-content">
+                    <p><strong>What it is:</strong> A public policy (stored in a TXT record) listing all IP addresses (mail servers) that are **authorized** to send email for your domain.</p>
                     <p><strong>How it works:</strong> The recipient server checks the sending IP address against your domain's SPF record. If the IP is on the list, the email passes the SPF check.</p>
                     <p><strong>For Google Workspace:</strong> Your record must contain <code>include:_spf.google.com</code> to authorize Google's sending servers.</p>
                     <p><strong>Analogy:</strong> SPF is the **bouncer at the door with a guest list**. "Is this sender's IP address on the approved list for <code>yourdomain.edu</code>?"</p>
@@ -191,12 +326,12 @@
 
             <div class="step" id="step-dkim">
                 <div class="step-header">
-                    <span><span class="icon">✍️</span> 3. DKIM: DomainKeys Identified Mail</span>
+                    <span><span class="icon">✍️</span> 5. DKIM: DomainKeys Identified Mail</span>
                     <span class="toggle-icon"></span>
                 </div>
                 <div class="step-content">
                     <p><strong>What it is:</strong> A **cryptographic digital signature** added to the email header. It verifies the email was genuinely authorized by the domain owner and that the message content hasn't been altered during transport.</p>
-                    <p><strong>How it works:</strong> The recipient server uses a **public key** (published in your domain's DNS) to decrypt and verify the signature applied by the sender's **private key**.</p>
+                    <p><strong>How it works:</strong> The recipient server uses a **public key** (published in a TXT record) to decrypt and verify the signature applied by the sender's **private key**.</p>
                     <p><strong>Key Check:</strong> "Does the signature match, proving authenticity, and is the content unchanged?"</p>
                     <p><strong>Analogy:</strong> DKIM is the **tamper-proof seal and official signature** on a document. It verifies the document's integrity and source.</p>
                 </div>
@@ -206,11 +341,11 @@
 
             <div class="step" id="step-dmarc">
                 <div class="step-header">
-                    <span><span class="icon">🚦</span> 4. DMARC: Policy & Alignment</span>
+                    <span><span class="icon">🚦</span> 6. DMARC: Policy & Alignment</span>
                     <span class="toggle-icon"></span>
                 </div>
                 <div class="step-content">
-                    <p><strong>What it is:</strong> DMARC (Domain-based Message Authentication, Reporting & Conformance) connects the results of SPF and DKIM and enforces a policy.</p>
+                    <p><strong>What it is:</strong> DMARC (Domain-based Message Authentication, Reporting & Conformance) connects the results of SPF and DKIM and enforces a policy (also stored in a TXT record).</p>
                     <p><strong>Alignment:</strong> DMARC is essential because it requires the visible **"From" address** to align with the domain validated by either SPF or DKIM. This is the final defense against domain spoofing.</p>
                     <p><strong>The Policy (`p=`):</strong> This tag tells the recipient server what to do if the email fails the alignment check:</p>
                     <ul>
@@ -226,7 +361,7 @@
 
             <div class="step" id="step-outcome" style="background-color: #e8f5e9; border-left-color: #388e3c;">
                 <div class="step-header" style="color: #2e7d32;">
-                    <span><span class="icon">✅</span> 5. The Outcome</span>
+                    <span><span class="icon">✅</span> 7. The Outcome</span>
                     <span class="toggle-icon"></span>
                 </div>
                 <div class="step-content">
@@ -239,11 +374,11 @@
 
             <div class="step" id="step-failure">
                 <div class="step-header">
-                    <span><span class="icon">⚠️</span> 6. How Spoofed Emails Can Still Pass (Failure Modes)</span>
+                    <span><span class="icon">⚠️</span> 8. How Spoofed Emails Can Still Pass (Failure Modes)</span>
                     <span class="toggle-icon"></span>
                 </div>
                 <div class="step-content">
-                    <p>Even with SPF, DKIM, and DMARC, some spoofing tactics can still succeed, requiring users to remain vigilant:</p>
+                    <p>Even with SPF, DKIM, and DMARC fully configured, some spoofing tactics can still succeed, requiring users to remain vigilant:</p>
                     <ul>
                         <li><strong>DMARC Set to `p=none`:</strong> The most common reason. If the domain owner hasn't set their DMARC policy to `quarantine` or `reject`, receiving servers are simply told to monitor the spoofed email, and they often deliver it anyway.</li>
                         <li>**"Friendly From" Spoofing (Display Name Attack):** A scammer uses a completely different, unauthenticated domain, but sets the visible display name to match a legitimate one (e.g., the email address is `scammer@notyourdomain.com` but the name shown is **"Principal Smith"**). The security checks only look at the domain, not the display name.</li>
@@ -256,141 +391,8 @@
         </div>
     </div>
 
-  
-
-    <script>
-        document.querySelectorAll('.step').forEach(step => {
-            step.addEventListener('click', () => {
-                // Play welcome sound the first time the user interacts
-                if (!window.welcomePlayed) {
-                    try { document.getElementById('audio-welcome').play(); } catch(e) { /* autoplay may be blocked until user gesture */ }
-                    window.welcomePlayed = true;
-                }
-                // Toggle active class on the clicked step
-                step.classList.toggle('active');
-
-                // Optional: If you want to make sure only one box is open at a time, 
-                // uncomment the following block:
-                /*
-                document.querySelectorAll('.step').forEach(otherStep => {
-                    if (otherStep !== step && otherStep.classList.contains('active')) {
-                        otherStep.classList.remove('active');
-                    }
-                });
-                */
-            });
-        });
-    </script>
-
-<style>
-    /* GAME-SPECIFIC STYLES (AOL-inspired buttons) */
-    .dmarc-game {
-        max-width: 600px;
-        margin: 50px auto;
-        padding: 26px;
-        border: 2px solid rgba(0,51,153,0.85); /* deep AOL indigo */
-        border-radius: 10px;
-        background: linear-gradient(180deg, rgba(232,238,246,0.95), rgba(216,230,255,0.9));
-        box-shadow: 0 8px 30px rgba(4,18,64,0.25);
-    }
-    .dmarc-game h2 {
-        color: #003399;
-        text-align: center;
-        margin-bottom: 18px;
-        font-size: 1.75em;
-        text-shadow: 0 1px 0 rgba(255,255,255,0.7);
-    }
-    #scenario, #policy-info {
-        font-size: 1.05em;
-        margin-bottom: 16px;
-        padding: 12px;
-        border-radius: 6px;
-        background-color: rgba(255,255,255,0.85);
-        text-align: center;
-        border: 1px solid rgba(0,51,153,0.08);
-    }
-
-    /* Glossy AOL-esque option buttons */
-    .options button {
-        display: block;
-        width: 100%;
-        padding: 14px 16px;
-        margin: 10px 0;
-        font-size: 1.05em;
-        cursor: pointer;
-        border: 1px solid rgba(0,38,102,0.95);
-        border-radius: 6px;
-        transition: transform 0.08s ease, box-shadow 0.12s ease;
-        background: linear-gradient(180deg,#1e62d0 0%, #0a47a3 60%, #083b8a 100%);
-    color: #fff9dc; /* pale warm yellow for high contrast */
-    text-shadow: 0 1px 0 rgba(0,0,0,0.18);
-        font-weight: 700;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 10px rgba(6,24,64,0.22);
-        text-align: left;
-        padding-left: 18px;
-    }
-    .options button:hover {
-        transform: translateY(-3px);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 10px 20px rgba(6,24,64,0.26);
-        color: #fffde0;
-    }
-    .options button:disabled {
-        opacity: 0.6;
-        transform: none;
-        box-shadow: none;
-        filter: grayscale(10%);
-        cursor: default;
-    }
-
-    #result {
-        text-align: center;
-        margin-top: 22px;
-        padding: 14px;
-        border-radius: 6px;
-        min-height: 46px;
-        font-weight: 800;
-        font-size: 1.12em;
-        color: #05204a;
-        border: 1px solid rgba(0,0,0,0.06);
-        background: rgba(255,255,255,0.9);
-        box-shadow: 0 6px 18px rgba(6,24,64,0.08);
-    }
-    .correct {
-        background: linear-gradient(180deg,#e6f7ea, #c9efd0);
-        color: #0b4d13;
-        border: 1px solid #2e7d32;
-    }
-    .incorrect {
-        background: linear-gradient(180deg,#ffecec, #ffd6d6);
-        color: #7a1212;
-        border: 1px solid #d32f2f;
-    }
-
-    #next-button {
-        display: none;
-        width: 100%;
-        padding: 12px;
-        margin-top: 12px;
-        background: linear-gradient(180deg,#ffda44 0%, #ffbf00 60%);
-        color: #08284a;
-        border: 1px solid rgba(0,0,0,0.12);
-        border-radius: 6px;
-        font-size: 1.02em;
-        font-weight: 800;
-        cursor: pointer;
-        box-shadow: 0 6px 16px rgba(4,18,64,0.12), inset 0 1px 0 rgba(255,255,255,0.5);
-    }
-    #next-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 26px rgba(4,18,64,0.16);
-    }
-
-    /* Focus outlines for keyboard users */
-    .options button:focus, #next-button:focus { outline: 3px solid rgba(0,102,204,0.22); }
-</style>
-
 <div class="dmarc-game">
-    <h2>🚦 DMARC Decision Challenge 🚦</h2>
+    <h2>🚦 Email Delivery Checkpoint 🚦</h2>
     
     <div id="scenario"></div>
     <div id="policy-info"></div>
@@ -406,142 +408,201 @@
     <button id="next-button" onclick="loadNextScenario()">Next Scenario</button>
 </div>
 
-<script>
-    const scenarios = [
-        { 
-            name: "The Perfect Pass", 
-            spf: "PASS", 
-            dkim: "PASS", 
-            alignment: "PASS", 
-            policy: "reject", 
-            answer: "DELIVER", 
-            explanation: "Since both SPF and DKIM passed and aligned, the email is fully authenticated and delivered, regardless of the strict 'reject' policy." 
-        },
-        { 
-            name: "The DKIM Rescue", 
-            spf: "FAIL (IP not listed)", 
-            dkim: "PASS (Signature OK)", 
-            alignment: "PASS", 
-            policy: "quarantine", 
-            answer: "DELIVER", 
-            explanation: "DMARC only requires *one* of the checks (SPF or DKIM) to pass and align. DKIM passed, so the email is delivered." 
-        },
-        { 
-            name: "Policy Enforced", 
-            spf: "FAIL", 
-            dkim: "FAIL", 
-            alignment: "FAIL", 
-            policy: "reject", 
-            answer: "REJECT", 
-            explanation: "Both authentication checks failed and aligned. The DMARC policy of 'reject' is enforced, causing the email to bounce." 
-        },
-        { 
-            name: "The Soft Failure", 
-            spf: "FAIL", 
-            dkim: "FAIL", 
-            alignment: "FAIL", 
-            policy: "quarantine", 
-            answer: "QUARANTINE", 
-            explanation: "Both authentication checks failed. The DMARC policy of 'quarantine' is enforced, sending the email to the spam folder." 
-        },
-        { 
-            name: "The Monitoring Phase", 
-            spf: "FAIL", 
-            dkim: "FAIL", 
-            alignment: "FAIL", 
-            policy: "none", 
-            answer: "DELIVER", 
-            explanation: "Even though authentication failed, the 'none' policy instructs the receiving server to simply monitor and deliver the email. (The least secure setting!)" 
-        }
-    ];
+    <script>
+        const scenarios = [
+             { 
+                name: "Scenario 1: MX Record Missing", 
+                type: "pre_check",
+                mx_status: "FAIL (No MX Record)", 
+                txt_status: "N/A", 
+                spf: "N/A", 
+                dkim: "N/A", 
+                policy: "reject", 
+                answer: "REJECT", 
+                explanation: "This is a fundamental failure! The sender's server could not even determine *where* to send the mail. Without a valid **MX record** (The Mail Carrier's Address Book), the entire process stops, and the email is **rejected** before any authentication checks begin." 
+            },
+            { 
+                name: "Scenario 2: Policy File Missing", 
+                type: "pre_check",
+                mx_status: "PASS", 
+                txt_status: "FAIL (No DMARC TXT Record)", 
+                spf: "FAIL", 
+                dkim: "FAIL", 
+                policy: "none (default)", 
+                answer: "DELIVER", 
+                explanation: "If the recipient server finds no DMARC **TXT record** (The Official Policy File Cabinet), it cannot enforce a policy. By default, the delivery falls back to **'none'**, allowing the unauthenticated email to be **delivered** (but often still tagged as suspicious)." 
+            },
+            { 
+                name: "Scenario 3: The Valid Sender (MX & TXT Pass)", 
+                type: "dmarc_check",
+                mx_status: "PASS", 
+                txt_status: "PASS", 
+                spf: "PASS (IP authorized)", 
+                dkim: "FAIL (Bad Signature)", 
+                policy: "quarantine", 
+                answer: "DELIVER", 
+                explanation: "Since **DMARC only requires ONE** of the checks (SPF or DKIM) to pass and align, the SPF pass is enough to validate the email. It is delivered, despite the DKIM failure." 
+            },
+            { 
+                name: "Scenario 4: Policy Enforced", 
+                type: "dmarc_check",
+                mx_status: "PASS", 
+                txt_status: "PASS",
+                spf: "FAIL", 
+                dkim: "FAIL", 
+                policy: "reject", 
+                answer: "REJECT", 
+                explanation: "Both SPF and DKIM failed, meaning the sender is unauthorized. The strict DMARC policy of 'reject' is enforced, causing the email to **bounce**." 
+            },
+            { 
+                name: "Scenario 5: Monitoring Mode", 
+                type: "dmarc_check",
+                mx_status: "PASS", 
+                txt_status: "PASS",
+                spf: "FAIL", 
+                dkim: "FAIL", 
+                policy: "none", 
+                answer: "DELIVER", 
+                explanation: "Authentication failed, but the 'none' policy instructs the receiving server to simply monitor and **deliver** the email, which is why 'none' is the least secure setting!" 
+            },
+            { 
+                name: "Scenario 6: The Soft Failure", 
+                type: "dmarc_check",
+                mx_status: "PASS", 
+                txt_status: "PASS",
+                spf: "FAIL", 
+                dkim: "FAIL", 
+                policy: "quarantine", 
+                answer: "QUARANTINE", 
+                explanation: "Both authentication checks failed. The DMARC policy of 'quarantine' is enforced, sending the email to the **spam folder**." 
+            }
+        ];
 
-    let currentScenarioIndex = 0;
-    let isAnswered = false;
+        let currentScenarioIndex = 0;
+        let isAnswered = false;
 
-    // --- DOM Elements ---
-    const scenarioDiv = document.getElementById('scenario');
-    const policyInfoDiv = document.getElementById('policy-info');
-    const resultDiv = document.getElementById('result');
-    const optionsDiv = document.getElementById('options');
-    const nextButton = document.getElementById('next-button');
+        // --- DOM Elements ---
+        const scenarioDiv = document.getElementById('scenario');
+        const policyInfoDiv = document.getElementById('policy-info');
+        const resultDiv = document.getElementById('result');
+        const optionsDiv = document.getElementById('options');
+        const nextButton = document.getElementById('next-button');
 
-    function loadScenario(index) {
-        if (index >= scenarios.length) {
-            scenarioDiv.innerHTML = "You completed the challenge! Refresh the page to play again.";
-            policyInfoDiv.innerHTML = "";
-            optionsDiv.style.display = 'none';
+        function loadScenario(index) {
+            if (index >= scenarios.length) {
+                scenarioDiv.innerHTML = "You completed the challenge! Refresh the page to play again.";
+                policyInfoDiv.innerHTML = "";
+                optionsDiv.style.display = 'none';
+                nextButton.style.display = 'none';
+                resultDiv.innerHTML = "Great job!";
+                resultDiv.className = 'correct';
+                // play goodbye audio once when user completes
+                try { document.getElementById('audio-goodbye').play(); } catch(e) { /* user agents may require gesture */ }
+                return;
+            }
+
+            const scenario = scenarios[index];
+            isAnswered = false;
+            
+            // Build the scenario information display based on the scenario type
+            let checkResults = `
+                <strong>Pre-Checks (MX & TXT):</strong> 
+                <br>MX Status: <strong>${scenario.mx_status}</strong> 
+                <br>TXT/Policy Status: <strong>${scenario.txt_status}</strong>
+            `;
+
+            if (scenario.type === 'dmarc_check') {
+                 checkResults += `
+                    <br>---
+                    <br><strong>Authentication Checks:</strong>
+                    <br>SPF Check: <strong>${scenario.spf}</strong> 
+                    <br>DKIM Check: <strong>${scenario.dkim}</strong>
+                `;
+            } else if (scenario.type === 'pre_check' && scenario.spf !== 'N/A') {
+                // For pre-check failures, we still show the results IF the checks happened (e.g., policy = none)
+                 checkResults += `
+                    <br>---
+                    <br><strong>Authentication Checks:</strong>
+                    <br>SPF Check: <strong>${scenario.spf}</strong> 
+                    <br>DKIM Check: <strong>${scenario.dkim}</strong>
+                `;
+            }
+
+            scenarioDiv.innerHTML = checkResults;
+            
+            // DMARC Policy only matters if the pre-checks passed (or defaulted to 'none')
+            if (scenario.type === 'pre_check' && scenario.answer === 'REJECT') {
+                policyInfoDiv.innerHTML = `Action dictated by: <strong>Fundamental DNS Failure (MX)</strong>`;
+            } else {
+                policyInfoDiv.innerHTML = `The domain's DMARC Policy is set to: <strong>p=${scenario.policy}</strong>`;
+            }
+            
+            resultDiv.innerHTML = "Click an option to see the result.";
+            resultDiv.className = '';
             nextButton.style.display = 'none';
-            resultDiv.innerHTML = "Great job!";
-            resultDiv.className = 'correct';
-            // play goodbye audio once when user completes
-            try { document.getElementById('audio-goodbye').play(); } catch(e) { /* user agents may require gesture */ }
-            return;
+            
+            // Re-enable all buttons and let CSS control their look (remove inline overrides)
+            optionsDiv.style.display = 'block';
+            Array.from(optionsDiv.querySelectorAll('button')).forEach(btn => {
+                btn.disabled = false;
+                btn.style.removeProperty('background-color');
+                btn.style.removeProperty('color');
+            });
         }
 
-        const scenario = scenarios[index];
-        isAnswered = false;
-        
-        scenarioDiv.innerHTML = `
-            <strong>Scenario:</strong> 
-            <br>SPF Check: <strong>${scenario.spf}</strong> 
-            <br>DKIM Check: <strong>${scenario.dkim}</strong>
-        `;
-        policyInfoDiv.innerHTML = `The domain's DMARC Policy is set to: <strong>p=${scenario.policy}</strong>`;
-        
-        resultDiv.innerHTML = "Click an option to see the result.";
-        resultDiv.className = '';
-        nextButton.style.display = 'none';
-        
-        // Re-enable all buttons and let CSS control their look (remove inline overrides)
-        optionsDiv.style.display = 'block';
-        Array.from(optionsDiv.querySelectorAll('button')).forEach(btn => {
-            btn.disabled = false;
-            btn.style.removeProperty('background-color');
-            btn.style.removeProperty('color');
+        function checkAnswer(userAnswer) {
+            if (isAnswered) return;
+            isAnswered = true;
+            
+            const scenario = scenarios[currentScenarioIndex];
+            const correctAnswer = scenario.answer;
+            
+            // Disable all buttons
+            Array.from(optionsDiv.querySelectorAll('button')).forEach(btn => {
+                btn.disabled = true;
+            });
+
+            if (userAnswer === correctAnswer) {
+                resultDiv.className = 'correct';
+                resultDiv.innerHTML = `✅ Correct! ${scenario.explanation}`;
+            } else {
+                resultDiv.className = 'incorrect';
+                const correctOptionText = getOptionText(correctAnswer);
+                resultDiv.innerHTML = `❌ Incorrect. The correct action is ${correctOptionText}. ${scenario.explanation}`;
+            }
+
+            nextButton.style.display = 'block';
+        }
+
+        function getOptionText(answerCode) {
+            switch(answerCode) {
+                case 'DELIVER': return "A. Deliver to Inbox";
+                case 'QUARANTINE': return "B. Send to Spam/Quarantine";
+                case 'REJECT': return "C. Reject/Bounce the Email";
+                default: return "Unknown Action";
+            }
+        }
+
+        function loadNextScenario() {
+            currentScenarioIndex++;
+            loadScenario(currentScenarioIndex);
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('click', () => {
+                // Play welcome sound the first time the user interacts
+                if (!window.welcomePlayed) {
+                    try { document.getElementById('audio-welcome').play(); } catch(e) { /* autoplay may be blocked until user gesture */ }
+                    window.welcomePlayed = true;
+                }
+                // Toggle active class on the clicked step
+                step.classList.toggle('active');
+            });
         });
-    }
 
-    function checkAnswer(userAnswer) {
-        if (isAnswered) return;
-        isAnswered = true;
-        
-        const scenario = scenarios[currentScenarioIndex];
-        const correctAnswer = scenario.answer;
-        
-        // Disable all buttons
-        Array.from(optionsDiv.querySelectorAll('button')).forEach(btn => {
-            btn.disabled = true;
-        });
-
-        if (userAnswer === correctAnswer) {
-            resultDiv.className = 'correct';
-            resultDiv.innerHTML = `✅ Correct! ${scenario.explanation}`;
-        } else {
-            resultDiv.className = 'incorrect';
-            const correctOptionText = getOptionText(correctAnswer);
-            resultDiv.innerHTML = `❌ Incorrect. The correct action is ${correctOptionText}. ${scenario.explanation}`;
-        }
-
-        nextButton.style.display = 'block';
-    }
-
-    function getOptionText(answerCode) {
-        switch(answerCode) {
-            case 'DELIVER': return "A. Deliver to Inbox";
-            case 'QUARANTINE': return "B. Send to Spam/Quarantine";
-            case 'REJECT': return "C. Reject/Bounce the Email";
-            default: return "Unknown Action";
-        }
-    }
-
-    function loadNextScenario() {
-        currentScenarioIndex++;
+        // Load the first scenario when the script runs
         loadScenario(currentScenarioIndex);
-    }
-
-    // Load the first scenario when the script runs
-    loadScenario(currentScenarioIndex);
-</script>
+    </script>
 
 <!-- Audio elements for AOL sounds -->
 <audio id="audio-welcome" src="youve_got_mail.mp3" preload="auto"></audio>
